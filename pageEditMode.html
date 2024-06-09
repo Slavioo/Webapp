@@ -4,19 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Resizable Containers</title>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             padding: 20px;
         }
+        #containerArea {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
         .container {
-            width: 150px;
-            height: 150px;
+            width: 250px;
+            height: 250px;
             background-color: #ffffff;
             border: 2px dashed orange;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -28,18 +30,7 @@
         .container:hover {
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
-        #containerArea {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .ui-resizable-handle {
-            display: none !important;
-        }
-        .add-button {
-            position: absolute;
-            top: -10px;
-            right: -10px;
+        .add-button, .remove-button {
             background-color: orange;
             color: white;
             border: none;
@@ -55,7 +46,17 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             transition: background-color 0.2s ease;
         }
-        .add-button:hover {
+        .add-button {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+        }
+        .remove-button {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+        }
+        .add-button:hover, .remove-button:hover {
             background-color: darkorange;
         }
         .settings-dropdown {
@@ -73,6 +74,12 @@
             background: none;
             font-size: 14px;
             padding: 5px;
+            margin-bottom: 5px;
+            width: 100%;
+        }
+        .dropdown-title {
+            font-weight: bold;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -80,45 +87,93 @@
 
 <div id="containerArea"></div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script>
-    $(document).ready(function() {
-        var fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon'];
+    var chartTypes = ['Bar', 'Pie', 'Line', 'Area', 'Doughnut', 'Radar', 'Polar Area', 'Bubble', 'Scatter'];
+    var containerArea = document.getElementById('containerArea');
 
-        function createContainer() {
-            // Remove add button from all containers
-            $('.add-button').remove();
+    function createContainer() {
+        // Create a new container
+        var container = document.createElement('div');
+        container.style.width = '250px';
+        container.style.height = '250px';
+        container.className = 'container';
 
-            // Create a new container
-            var container = $('<div class="container"></div>');
+        // Create settings dropdown
+        var settingsDropdown = document.createElement('div');
+        settingsDropdown.className = 'settings-dropdown';
 
-            // Create settings dropdown
-            var settingsDropdown = $('<div class="settings-dropdown"><select></select></div>');
-            fruits.forEach(function(fruit) {
-                settingsDropdown.find('select').append('<option value="' + fruit + '">' + fruit + '</option>');
-            });
+        // Create chart type dropdown
+        var selectChartType = createDropdown('Chart Type:', chartTypes, 'Select Chart Type');
+        settingsDropdown.appendChild(selectChartType);
 
-            // Create and add the add button to the new container
-            var addButton = $('<button class="add-button">+</button>');
-            addButton.click(function() {
-                createContainer();
-            });
+        // Create container width dropdown
+        var selectContainerWidth = createDropdown('Width:', getRangeArray(50, 2000, 50), 'Select Width');
+        selectContainerWidth.addEventListener('change', function() {
+            container.style.width = this.value + 'px';
+        });
+        settingsDropdown.appendChild(selectContainerWidth);
 
-            // Append settings dropdown and add button to the container
-            container.append(settingsDropdown);
-            container.append(addButton);
+        // Create container height dropdown
+        var selectContainerHeight = createDropdown('Height:', getRangeArray(50, 1000, 50), 'Select Height');
+        selectContainerHeight.addEventListener('change', function() {
+            container.style.height = this.value + 'px';
+        });
+        settingsDropdown.appendChild(selectContainerHeight);
 
-            // Make the new container resizable
-            container.resizable();
+        // Create and add the add button to the new container
+        var addButton = document.createElement('button');
+        addButton.className = 'add-button';
+        addButton.textContent = '+';
+        addButton.onclick = createContainer;
 
-            // Append the new container to the container area
-            $('#containerArea').append(container);
+        // Create and add the remove button to the new container
+        var removeButton = document.createElement('button');
+        removeButton.className = 'remove-button';
+        removeButton.textContent = '-';
+        removeButton.onclick = function() {
+            containerArea.removeChild(container);
+        };
+
+        // Append settings dropdown and add button to the container
+        container.appendChild(settingsDropdown);
+        container.appendChild(addButton);
+        container.appendChild(removeButton);
+
+        // Append the new container to the container area
+        containerArea.appendChild(container);
+    }
+
+    // Initialize with one container
+    createContainer();
+
+    function createDropdown(title, options, defaultValue) {
+        var select = document.createElement('select');
+        var titleElement = document.createElement('div');
+        titleElement.className = 'dropdown-title';
+        titleElement.textContent = title;
+        select.appendChild(titleElement);
+
+        var defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = defaultValue;
+        select.appendChild(defaultOption);
+
+        options.forEach(function(option) {
+            var optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.textContent = title + ' ' + option;
+            select.appendChild(optionElement);
+        });
+        return select;
+    }
+
+    function getRangeArray(min, max, step) {
+        var arr = [];
+        for (var i = min; i <= max; i += step) {
+            arr.push(i);
         }
-
-        // Initialize with one container
-        createContainer();
-    });
+        return arr;
+    }
 </script>
 
 </body>
