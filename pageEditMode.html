@@ -31,6 +31,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
         .add-button, .remove-button {
+            display: flex;
             background-color: orange;
             color: white;
             border: none;
@@ -40,7 +41,6 @@
             cursor: pointer;
             font-size: 16px;
             line-height: 20px;
-            display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -60,6 +60,7 @@
             background-color: darkorange;
         }
         .settings-dropdown {
+            display: block;
             position: absolute;
             top: 10px;
             left: 10px;
@@ -77,56 +78,81 @@
             margin-bottom: 5px;
             width: 100%;
         }
-        .dropdown-title {
-            font-weight: bold;
-            margin-bottom: 5px;
+        .toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
 
 <div id="containerArea"></div>
+<button class="toggle-button" onclick="toggleMode()">Edit Mode</button>
 
 <script>
     var chartTypes = ['Bar', 'Pie', 'Line', 'Area', 'Doughnut', 'Radar', 'Polar Area', 'Bubble', 'Scatter'];
     var containerArea = document.getElementById('containerArea');
+    var toggleButton = document.querySelector('.toggle-button');
+    var analysisMode = false;
+
+    function toggleMode() {
+        analysisMode = !analysisMode;
+        toggleButton.textContent = analysisMode ? 'Analysis Mode' : 'Edit Mode';
+
+        var containers = document.querySelectorAll('.container');
+        containers.forEach(function(container) {
+            var settingsDropdown = container.querySelector('.settings-dropdown');
+            var addButton = container.querySelector('.add-button');
+            var removeButton = container.querySelector('.remove-button');
+
+            settingsDropdown.style.display = analysisMode ? 'none' : 'block';
+            addButton.style.display = analysisMode ? 'none' : 'flex';
+            removeButton.style.display = analysisMode ? 'none' : 'flex';
+            container.style.border = analysisMode ? '2px dashed transparent' : '2px dashed orange';
+        });
+    }
 
     function createContainer() {
-        // Create a new container
         var container = document.createElement('div');
-        container.style.width = '250px';
-        container.style.height = '250px';
         container.className = 'container';
 
-        // Create settings dropdown
+        var previousContainer = document.querySelector('.container:last-of-type');
+        if (previousContainer) {
+            container.style.width = previousContainer.style.width;
+            container.style.height = previousContainer.style.height;
+            container.style.border = previousContainer.style.border;
+        }
+
         var settingsDropdown = document.createElement('div');
         settingsDropdown.className = 'settings-dropdown';
 
-        // Create chart type dropdown
-        var selectChartType = createDropdown('Chart Type:', chartTypes, 'Select Chart Type');
+        var selectChartType = createDropdown(chartTypes, 'Select Chart Type');
         settingsDropdown.appendChild(selectChartType);
 
-        // Create container width dropdown
-        var selectContainerWidth = createDropdown('Width:', getRangeArray(50, 2000, 50), 'Select Width');
+        var selectContainerWidth = createDropdown(getRangeArray(50, 2000, 50), 'Select Width');
         selectContainerWidth.addEventListener('change', function() {
             container.style.width = this.value + 'px';
         });
         settingsDropdown.appendChild(selectContainerWidth);
 
-        // Create container height dropdown
-        var selectContainerHeight = createDropdown('Height:', getRangeArray(50, 1000, 50), 'Select Height');
+        var selectContainerHeight = createDropdown(getRangeArray(50, 1000, 50), 'Select Height');
         selectContainerHeight.addEventListener('change', function() {
             container.style.height = this.value + 'px';
         });
         settingsDropdown.appendChild(selectContainerHeight);
 
-        // Create and add the add button to the new container
         var addButton = document.createElement('button');
         addButton.className = 'add-button';
         addButton.textContent = '+';
         addButton.onclick = createContainer;
 
-        // Create and add the remove button to the new container
         var removeButton = document.createElement('button');
         removeButton.className = 'remove-button';
         removeButton.textContent = '-';
@@ -134,24 +160,21 @@
             containerArea.removeChild(container);
         };
 
-        // Append settings dropdown and add button to the container
+        settingsDropdown.style.display = analysisMode ? 'none' : 'block';
+        addButton.style.display = analysisMode ? 'none' : 'flex';
+        removeButton.style.display = analysisMode ? 'none' : 'flex';
+
         container.appendChild(settingsDropdown);
         container.appendChild(addButton);
         container.appendChild(removeButton);
 
-        // Append the new container to the container area
         containerArea.appendChild(container);
     }
 
-    // Initialize with one container
     createContainer();
 
-    function createDropdown(title, options, defaultValue) {
+    function createDropdown(options, defaultValue) {
         var select = document.createElement('select');
-        var titleElement = document.createElement('div');
-        titleElement.className = 'dropdown-title';
-        titleElement.textContent = title;
-        select.appendChild(titleElement);
 
         var defaultOption = document.createElement('option');
         defaultOption.value = '';
@@ -161,9 +184,10 @@
         options.forEach(function(option) {
             var optionElement = document.createElement('option');
             optionElement.value = option;
-            optionElement.textContent = title + ' ' + option;
+            optionElement.textContent = option;
             select.appendChild(optionElement);
         });
+
         return select;
     }
 
@@ -175,6 +199,5 @@
         return arr;
     }
 </script>
-
 </body>
 </html>
