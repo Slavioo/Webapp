@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Resizable Containers</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 150px;
+            height: 150px;
+            background-color: #ffffff;
+            border: 2px dashed orange;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            margin: 10px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .container:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        #containerArea {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .ui-resizable-handle {
+            display: none !important;
+        }
+        .add-button {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease;
+        }
+        .add-button:hover {
+            background-color: darkorange;
+        }
+        .settings-dropdown {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 5px;
+        }
+        .settings-dropdown select {
+            border: none;
+            background: none;
+            font-size: 14px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="containerArea"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew', 'Kiwi', 'Lemon'];
+
+        function createContainer() {
+            // Remove add button from all containers
+            $('.add-button').remove();
+
+            // Create a new container
+            var container = $('<div class="container"></div>');
+
+            // Create settings dropdown
+            var settingsDropdown = $('<div class="settings-dropdown"><select></select></div>');
+            fruits.forEach(function(fruit) {
+                settingsDropdown.find('select').append('<option value="' + fruit + '">' + fruit + '</option>');
+            });
+
+            // Create and add the add button to the new container
+            var addButton = $('<button class="add-button">+</button>');
+            addButton.click(function() {
+                createContainer();
+            });
+
+            // Append settings dropdown and add button to the container
+            container.append(settingsDropdown);
+            container.append(addButton);
+
+            // Make the new container resizable
+            container.resizable();
+
+            // Append the new container to the container area
+            $('#containerArea').append(container);
+        }
+
+        // Initialize with one container
+        createContainer();
+    });
+</script>
+
+</body>
+</html>
