@@ -119,39 +119,38 @@
         });
     }
 
-    function createContainer() {
+    function createContainer(parentContainer) {
         var container = document.createElement('div');
         container.className = 'container';
 
-        var previousContainer = document.querySelector('.container:last-of-type');
-        if (previousContainer) {
-            container.style.width = previousContainer.style.width;
-            container.style.height = previousContainer.style.height;
-            container.style.border = previousContainer.style.border;
+        if (parentContainer) {
+            container.style.width = parentContainer.style.width;
+            container.style.height = parentContainer.style.height;
+            container.style.border = parentContainer.style.border;
         }
 
         var settingsDropdown = document.createElement('div');
         settingsDropdown.className = 'settings-dropdown';
 
-        var selectChartType = createDropdown(chartTypes, 'Select Chart Type');
+        var selectChartType = createDropdown(chartTypes.map(type => `Chart type: ${type}`), 'Select Chart Type');
         settingsDropdown.appendChild(selectChartType);
 
-        var selectContainerWidth = createDropdown(getRangeArray(50, 2000, 50), 'Select Width');
+        var selectContainerWidth = createDropdown(getRangeArray(50, 2000, 50).map(value => `Width: ${value}px`), 'Select Width');
         selectContainerWidth.addEventListener('change', function() {
-            container.style.width = this.value + 'px';
+            container.style.width = this.value.split(': ')[1];
         });
         settingsDropdown.appendChild(selectContainerWidth);
 
-        var selectContainerHeight = createDropdown(getRangeArray(50, 1000, 50), 'Select Height');
+        var selectContainerHeight = createDropdown(getRangeArray(50, 1000, 50).map(value => `Height: ${value}px`), 'Select Height');
         selectContainerHeight.addEventListener('change', function() {
-            container.style.height = this.value + 'px';
+            container.style.height = this.value.split(': ')[1];
         });
         settingsDropdown.appendChild(selectContainerHeight);
 
         var addButton = document.createElement('button');
         addButton.className = 'add-button';
         addButton.textContent = '+';
-        addButton.onclick = createContainer;
+        addButton.onclick = function() { createContainer(container); };
 
         var removeButton = document.createElement('button');
         removeButton.className = 'remove-button';
