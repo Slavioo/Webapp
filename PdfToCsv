@@ -1,6 +1,5 @@
 import boto3
 import PyPDF2
-import re
 import csv
 import os
 
@@ -17,10 +16,13 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 # Function to process text with a selected model from Amazon Bedrock
-def process_text_with_model(text, model_name):
+def find_info_related_to_keyword(text, keyword, model_name):
+    # Construct the prompt for the model
+    prompt = f"Find information related to the keyword '{keyword}' in the following text:\n{text}"
+    
     response = bedrock_client.invoke_endpoint(
         EndpointName=model_name, # Replace with your model endpoint name
-        Body=text.encode('utf-8'),
+        Body=prompt.encode('utf-8'),
         ContentType='text/plain'
     )
     # Process the response from Bedrock
@@ -43,15 +45,13 @@ for filename in os.listdir(pdf_folder_path):
     if filename.endswith('.pdf'):
         pdf_path = os.path.join(pdf_folder_path, filename)
         text = extract_text_from_pdf(pdf_path)
-        processed_text = process_text_with_model(text, 'model-endpoint-name') # Replace with actual endpoint
-        # Search for the keyword and extract related information
-        found_items = re.findall(rf'\b{keyword}\b.*', processed_text)
-        summary_data.append([filename, found_items])
+        info_related_to_keyword = find_info_related_to_keyword(text, keyword, 'model-endpoint-name') # Replace with actual endpoint
+        summary_data.append([filename, info_related_to_keyword])
 
 # Write the summary data to a CSV file
 with open(summary_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
     csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(['File Name', 'Keyword Related Information'])
+    csvwriter.writerow(['File Name', 'Information Related to Keyword'])
     csvwriter.writerows(summary_data)
 
 print(f'Summary CSV file has been created at {summary_csv_path}')
