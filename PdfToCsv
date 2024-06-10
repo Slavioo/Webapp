@@ -1,33 +1,59 @@
-import os
-from PyPDF2 import PdfReader
-import csv
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.parser;
+using System.Text;
+using CsvHelper;
+using System.Globalization;
 
-# Function to search for a keyword in a single PDF and return the count
-def search_keyword_in_pdf(pdf_path, keyword):
-    with open(pdf_path, 'rb') as file:
-        reader = PdfReader(file)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text()
-        return text.lower().count(keyword.lower())
+namespace PDFKeywordSearch
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Enter the keyword to search:");
+            string keyword = Console.ReadLine();
+            string pdfFolder = @"PDFs";
+            string summaryFile = @"summary.csv";
+            var summaries = new List<KeywordSummary>();
 
-# Main script
-if __name__ == "__main__":
-    keyword = input("Enter the keyword to search: ")
-    pdf_folder = 'PDF'
-    summary = []
+            foreach (string file in Directory.GetFiles(pdfFolder, "*.pdf"))
+            {
+                int count = CountKeywordOccurrences(file, keyword);
+                summaries.Add(new KeywordSummary { PDFName = Path.GetFileName(file), KeywordOccurrence = count });
+            }
 
-    # Search for the keyword in each PDF file
-    for filename in os.listdir(pdf_folder):
-        if filename.endswith('.pdf'):
-            pdf_path = os.path.join(pdf_folder, filename)
-            count = search_keyword_in_pdf(pdf_path, keyword)
-            summary.append([filename, count])
+            using (var writer = new StreamWriter(summaryFile))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteRecords(summaries);
+            }
 
-    # Write the summary to a CSV file
-    with open('summary.csv', 'w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['PDF Name', 'Keyword Occurrence'])
-        writer.writerows(summary)
+            Console.WriteLine($"The summary has been saved to {summaryFile}");
+        }
 
-    print("The summary has been saved to summary.csv.")
+        static int CountKeywordOccurrences(string filePath, string keyword)
+        {
+            using (PdfReader reader = new PdfReader(filePath))
+            {
+                StringBuilder text = new StringBuilder();
+
+                for (int i = 1; i <= reader.NumberOfPages; i++)
+                {
+                    text.Append(PdfTextExtractor.GetTextFromPage(reader, i));
+                }
+
+                return text.ToString().ToLower().Split(new[] { keyword.ToLower() }, StringSplitOptions.None).Length - 1;
+            }
+        }
+    }
+
+    public class KeywordSummary
+    {
+        public string PDFName { get; set; }
+        public int KeywordOccurrence { get; set; }
+    }
+}
