@@ -1,57 +1,33 @@
-import boto3
-import PyPDF2
-import csv
 import os
+from PyPDF2 import PdfReader
+import csv
 
-# Initialize the Amazon Bedrock client with your credentials
-bedrock_client = boto3.client('bedrock', aws_access_key_id='YOUR_ACCESS_KEY', aws_secret_access_key='YOUR_SECRET_KEY', region_name='YOUR_REGION')
-
-# Function to extract text from a PDF file
-def extract_text_from_pdf(pdf_path):
+# Function to search for a keyword in a single PDF and return the count
+def search_keyword_in_pdf(pdf_path, keyword):
     with open(pdf_path, 'rb') as file:
-        reader = PyPDF2.PdfFileReader(file)
+        reader = PdfReader(file)
         text = ""
-        for page_num in range(reader.numPages):
-            text += reader.getPage(page_num).extractText()
-    return text
+        for page in reader.pages:
+            text += page.extract_text()
+        return text.lower().count(keyword.lower())
 
-# Function to process text with a selected model from Amazon Bedrock
-def find_info_related_to_keyword(text, keyword, model_name):
-    # Construct the prompt for the model
-    prompt = f"Find information related to the keyword '{keyword}' in the following text:\n{text}"
-    
-    response = bedrock_client.invoke_endpoint(
-        EndpointName=model_name, # Replace with your model endpoint name
-        Body=prompt.encode('utf-8'),
-        ContentType='text/plain'
-    )
-    # Process the response from Bedrock
-    processed_text = response['Body'].read().decode('utf-8')
-    return processed_text
+# Main script
+if __name__ == "__main__":
+    keyword = input("Enter the keyword to search: ")
+    pdf_folder = 'PDF'
+    summary = []
 
-# Directory where the PDF files are stored
-pdf_folder_path = 'path/to/pdf/folder'
-# Your keyword
-keyword = 'YourKeywordHere'
+    # Search for the keyword in each PDF file
+    for filename in os.listdir(pdf_folder):
+        if filename.endswith('.pdf'):
+            pdf_path = os.path.join(pdf_folder, filename)
+            count = search_keyword_in_pdf(pdf_path, keyword)
+            summary.append([filename, count])
 
-# CSV file to save the summary
-summary_csv_path = 'summary.csv'
+    # Write the summary to a CSV file
+    with open('summary.csv', 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['PDF Name', 'Keyword Occurrence'])
+        writer.writerows(summary)
 
-# List to hold all the extracted information
-summary_data = []
-
-# Read all PDF files from the folder
-for filename in os.listdir(pdf_folder_path):
-    if filename.endswith('.pdf'):
-        pdf_path = os.path.join(pdf_folder_path, filename)
-        text = extract_text_from_pdf(pdf_path)
-        info_related_to_keyword = find_info_related_to_keyword(text, keyword, 'model-endpoint-name') # Replace with actual endpoint
-        summary_data.append([filename, info_related_to_keyword])
-
-# Write the summary data to a CSV file
-with open(summary_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-    csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(['File Name', 'Information Related to Keyword'])
-    csvwriter.writerows(summary_data)
-
-print(f'Summary CSV file has been created at {summary_csv_path}')
+    print("The summary has been saved to summary.csv.")
