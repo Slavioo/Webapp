@@ -2,8 +2,9 @@ import boto3
 import PyPDF2
 import re
 import csv
+import os
 
-# Initialize the Amazon Bedrock client
+# Initialize the Amazon Bedrock client with your credentials
 bedrock_client = boto3.client('bedrock', aws_access_key_id='YOUR_ACCESS_KEY', aws_secret_access_key='YOUR_SECRET_KEY', region_name='YOUR_REGION')
 
 # Function to extract text from a PDF file
@@ -15,18 +16,21 @@ def extract_text_from_pdf(pdf_path):
             text += reader.getPage(page_num).extractText()
     return text
 
-# Function to process text with Amazon Bedrock
-def process_text_with_bedrock(text):
-    # Replace 'YOUR_MODEL_NAME' with the actual model name you want to use
-    response = bedrock_client.invoke_endpoint(EndpointName='YOUR_MODEL_NAME', Body=text)
+# Function to process text with a selected model from Amazon Bedrock
+def process_text_with_model(text, model_name):
+    response = bedrock_client.invoke_endpoint(
+        EndpointName=model_name, # Replace with your model endpoint name
+        Body=text.encode('utf-8'),
+        ContentType='text/plain'
+    )
     # Process the response from Bedrock
-    processed_text = response['Body'].read()
+    processed_text = response['Body'].read().decode('utf-8')
     return processed_text
 
 # Directory where the PDF files are stored
 pdf_folder_path = 'path/to/pdf/folder'
-# Pattern to search for within the PDF files
-search_pattern = r'YourRegularExpressionHere'
+# Your keyword
+keyword = 'YourKeywordHere'
 
 # CSV file to save the summary
 summary_csv_path = 'summary.csv'
@@ -39,14 +43,15 @@ for filename in os.listdir(pdf_folder_path):
     if filename.endswith('.pdf'):
         pdf_path = os.path.join(pdf_folder_path, filename)
         text = extract_text_from_pdf(pdf_path)
-        processed_text = process_text_with_bedrock(text)
-        found_items = re.findall(search_pattern, processed_text)
+        processed_text = process_text_with_model(text, 'model-endpoint-name') # Replace with actual endpoint
+        # Search for the keyword and extract related information
+        found_items = re.findall(rf'\b{keyword}\b.*', processed_text)
         summary_data.append([filename, found_items])
 
 # Write the summary data to a CSV file
 with open(summary_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
     csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(['File Name', 'Extracted Information'])
+    csvwriter.writerow(['File Name', 'Keyword Related Information'])
     csvwriter.writerows(summary_data)
 
 print(f'Summary CSV file has been created at {summary_csv_path}')
