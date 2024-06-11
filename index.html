@@ -100,11 +100,8 @@
 </div>
 
 <div class="form-container">
-  <label for="companies">Please select a company:</label> <!-- Changed "Please select Companies" to "Please select a company" -->
-  <input list="companies" id="companyInput" placeholder="Type to search...">
-  <datalist id="companies">
-    <!-- Companies will be loaded here -->
-  </datalist>
+  <label for="companies">Please type a company name:</label>
+  <input id="companyInput" placeholder="Type to search...">
 
   <label for="questions">Please select a question:</label>
   <input list="questions" id="questionInput" placeholder="Type to search...">
@@ -129,24 +126,6 @@
 </table>
 
 <script>
-// Example JSON data for companies
-var companiesJson = [
-  {"name": "Company A"},
-  {"name": "Company B"},
-  {"name": "Company C"}
-  // Add more company data here
-];
-
-// Function to load companies into the datalist
-function loadCompanies() {
-  var companiesList = document.getElementById('companies');
-  companiesJson.forEach(function(company) {
-    var option = document.createElement('option');
-    option.value = company.name;
-    companiesList.appendChild(option);
-  });
-}
-
 // Function to add a new query record to the table
 function addQueryRecord(company, question, response) {
   var table = document.getElementById('queryTable');
@@ -182,16 +161,6 @@ document.getElementById('submitQuery').addEventListener('click', function() {
     return response.json();
   })
   .then(data => {
-    // After POST request, send GET request to the API to get the response
-    return fetch('https://api.example.com/getResponse?id=' + data.id);
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => {
     // Add the response data to the table
     addQueryRecord(companyInput, questionInput, data.response);
   })
@@ -201,9 +170,6 @@ document.getElementById('submitQuery').addEventListener('click', function() {
     addQueryRecord(companyInput, questionInput, 'no response');
   });
 });
-
-// Load companies on page load
-window.onload = loadCompanies;
 </script>
 
 </body>
